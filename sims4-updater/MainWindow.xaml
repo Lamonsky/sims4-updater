@@ -10,7 +10,7 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
-    <Grid Margin="15">
+    <Grid Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="50" />
             <RowDefinition Height="50" />
@@ -23,12 +23,12 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="150" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Grid.Row="0" Text="Select folder with Sims 4:" FontWeight="SemiBold"/>
+            <TextBlock Grid.Column="0" Grid.Row="0" Text="Select folder with Sims 4:" FontWeight="SemiBold" />
             <Border Grid.Column="1" Grid.Row="0" 
                     Background="{DynamicResource Surface0Brush}" 
                     CornerRadius="6" 
                     Padding="10"
-                    Margin="5,0">
+                    Margin="5,5">
                 <TextBlock Text="{Binding Sims4Model.GamePath}" 
                           Foreground="{DynamicResource Subtext0Brush}"
                           VerticalAlignment="Center"/>

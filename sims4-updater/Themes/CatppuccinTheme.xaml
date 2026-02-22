@@ -106,6 +106,7 @@
     <Style TargetType="TextBlock">
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
+		<Setter Property="HorizontalAlignment" Value="Center"/>
         <Setter Property="FontSize" Value="14"/>
     </Style>
 
