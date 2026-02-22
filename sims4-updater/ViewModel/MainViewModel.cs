@@ -53,7 +53,7 @@ namespace sims4_updater.ViewModel
         [RelayCommand]
         private async Task InstallDLCUnlockerAsync()
         {
-            Sims4DLCUnlocker.InstallUnlocker();
+            await Sims4DLCUnlocker.InstallUnlocker(Logger);
         }
 
     }
