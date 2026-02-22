@@ -57,6 +57,15 @@
                 <TextBlock Text="{Binding Logger.Logs}" TextWrapping="Wrap" />
             </ScrollViewer>
         </Grid>
-        <Button Grid.Row="3" Content="Install" Command="{Binding InstallCommand}"/>
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Content="Install DLCs" Command="{Binding InstallDLCCommand}"/>
+            <Button Grid.Column="1" Content="Install DLC Unlocker" Command="{Binding InstallDLCUnlockerCommand}"/>
+        </Grid>
+        
+        
     </Grid>
 </Window>

@@ -45,9 +45,15 @@ namespace sims4_updater.ViewModel
         }
 
         [RelayCommand]
-        private async Task InstallAsync()
+        private async Task InstallDLCAsync()
         {
             await Sims4Model.AllDlcs.DownloadAndInstallSelectedDlcsAsync(Logger, Sims4Model.GamePath);
+        }
+
+        [RelayCommand]
+        private async Task InstallDLCUnlockerAsync()
+        {
+            Sims4DLCUnlocker.InstallUnlocker();
         }
 
     }
