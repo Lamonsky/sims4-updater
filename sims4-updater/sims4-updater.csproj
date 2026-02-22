@@ -5,8 +5,12 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <RootNamespace>sims4_updater</RootNamespace>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>	
+	<UseWPF>true</UseWPF>
+	<PublishSingleFile>true</PublishSingleFile>
+	<SelfContained>true</SelfContained>
+	<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+	<ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>

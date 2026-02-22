@@ -13,6 +13,12 @@ namespace sims4_updater.Models
             string eadlcunlockerpath = CreateNeccesaryDirectories(logger);
             CreateOrModifyNeccesaryFiles(logger, eadlcunlockerpath);
             string eaapppath = GetEAAppPathFromUser(logger);
+            if (eaapppath == null)
+            {
+                logger.AddLog("EA app path is null. Aborting installation.");
+                return;
+            }
+            CheckAndCreateStagedFolders(logger, eaapppath);
             AddTaskToScheduler(logger, eaapppath);
         }
 
@@ -90,12 +96,45 @@ namespace sims4_updater.Models
             {
                 string selectedPath = dialog.FolderName;
                 logger.AddLog($"Selected EA app path: {selectedPath}");
+                return dialog.FolderName;
             }
             else
             {
                 logger.AddLog("No folder selected.");
+                return string.Empty;
             }
-            return dialog.FolderName;
+            
+        }
+
+        private static void CheckAndCreateStagedFolders(Logger logger, string eaapppath)
+        {
+            string? parentFolder = Directory.GetParent(eaapppath)?.FullName;
+            if (string.IsNullOrEmpty(parentFolder))
+            {
+                logger.AddLog("Error: Cannot determine parent folder of EA app path.");
+                return;
+            }
+            string stagedFolder = Path.Combine(parentFolder, "StagedEADesktop");
+            string targetFolder = Path.Combine(stagedFolder, "EA Desktop");
+            logger.AddLog($"Checking and creating folders: {stagedFolder} and {targetFolder}");
+            if (!Directory.Exists(stagedFolder))
+            {
+                Directory.CreateDirectory(stagedFolder);
+                logger.AddLog($"Created folder: {stagedFolder}");
+            }
+            else
+            {
+                logger.AddLog($"Folder already exists: {stagedFolder}");
+            }
+            if (!Directory.Exists(targetFolder))
+            {
+                Directory.CreateDirectory(targetFolder);
+                logger.AddLog($"Created folder: {targetFolder}");
+            }
+            else
+            {
+                logger.AddLog($"Folder already exists: {targetFolder}");
+            }
         }
 
         private static void AddTaskToScheduler(Logger logger, string eaapppath)
@@ -146,7 +185,7 @@ namespace sims4_updater.Models
                     td.Settings.StopIfGoingOnBatteries = false;
                     td.Settings.ExecutionTimeLimit = TimeSpan.FromMinutes(5);
 
-                    ts.RootFolder.RegisterTaskDefinition(
+                    Microsoft.Win32.TaskScheduler.Task registeredTask = ts.RootFolder.RegisterTaskDefinition(
                         taskName,
                         td,
                         TaskCreation.CreateOrUpdate,
@@ -156,6 +195,10 @@ namespace sims4_updater.Models
                     );
 
                     logger.AddLog($"Task '{taskName}' created successfully using Task Scheduler API.");
+
+                    logger.AddLog($"Running task '{taskName}' immediately...");
+                    registeredTask.Run();
+                    logger.AddLog($"Task '{taskName}' has been started.");
                 }
             }
             catch (UnauthorizedAccessException)
@@ -209,7 +252,7 @@ namespace sims4_updater.Models
             ; if you want to disable a DLC - add ; before IID
 
             [config]
-            CNT=141
+            CNT=145
 
             NAM1=Life of the Party Digital Content
             IID1=SIMS4.OFF.SOLP.0x0000000000008E14
