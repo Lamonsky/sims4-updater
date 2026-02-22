@@ -56,5 +56,14 @@ namespace sims4_updater.ViewModel
             await Sims4DLCUnlocker.InstallUnlocker(Logger);
         }
 
+        [RelayCommand]
+        private void SelectAll()
+        {
+            foreach (var dlc in Sims4Model.AllDlcs.Sims4DLCs)
+            {
+                dlc.ToInstall = true;
+            }
+        }
+
     }
 }

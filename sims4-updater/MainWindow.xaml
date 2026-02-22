@@ -40,7 +40,12 @@
                 <ColumnDefinition Width="300" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Button Grid.Row="0" Grid.Column="0" Content="Select All" Command="{Binding SelectAllCommand}" />
+            <ScrollViewer Grid.Column="0" Grid.Row="1" VerticalScrollBarVisibility="Auto" >
                 <ListBox ItemsSource="{Binding Sims4Model.AllDlcs.Sims4DLCs}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
@@ -53,7 +58,7 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
             </ScrollViewer>
-            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <ScrollViewer Grid.Column="1" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto">
                 <TextBlock Text="{Binding Logger.Logs}" TextWrapping="Wrap" />
             </ScrollViewer>
         </Grid>

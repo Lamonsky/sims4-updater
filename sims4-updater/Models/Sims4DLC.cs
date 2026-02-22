@@ -22,8 +22,43 @@ namespace sims4_updater.Models
         private bool _toInstall = false;
         private string _downloadFolder = string.Empty;
 
+        public void Download(Logger logger, INode targetNode)
+        {
+            _downloadFolder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Sims4DLCs");
 
-        public void Download()
+            if (!System.IO.Directory.Exists(_downloadFolder))
+            {
+                System.IO.Directory.CreateDirectory(_downloadFolder);
+            }
+
+            string downloadFilePath = System.IO.Path.Combine(_downloadFolder, $"{Code}.zip");
+
+            MegaApiClient megaApiClient = new MegaApiClient();
+
+            megaApiClient.LoginAnonymous();
+
+            string outputFilePath = System.IO.Path.Combine(_downloadFolder, $"{Code}.zip");
+
+            if (System.IO.File.Exists(outputFilePath))
+            {
+                System.IO.File.Delete(outputFilePath);
+            }
+
+            if (targetNode == null)
+            {
+                logger.AddLog("DLC not found in the Mega folder.");
+                return;
+            }
+
+            megaApiClient.DownloadFile(targetNode, outputFilePath);
+
+            //megaApiClient.DownloadFile(fileLink, outputFilePath);
+
+            megaApiClient.Logout();
+
+
+        }
+        public void DownloadBackup()
         {
             _downloadFolder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Sims4DLCs");
 
@@ -52,7 +87,7 @@ namespace sims4_updater.Models
             megaApiClient.Logout();
 
 
-            }
+        }
         public void Extract(Logger logger)
         {
             string downloadFilePath = System.IO.Path.Combine(_downloadFolder, $"{Code}.zip");
