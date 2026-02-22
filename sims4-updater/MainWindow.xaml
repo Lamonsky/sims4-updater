@@ -33,7 +33,7 @@
                           Foreground="{DynamicResource Subtext0Brush}"
                           VerticalAlignment="Center"/>
             </Border>
-            <Button Grid.Column="2" Grid.Row="0" Content="Browse" Command="{Binding BrowseCommand}" Margin="5,0,0,0"/>
+            <Button Grid.Column="2" Grid.Row="0" Content="Browse" Command="{Binding BrowseCommand}" Margin="5"/>
         </Grid>
         <Grid Grid.Row="1" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
@@ -42,8 +42,8 @@
             </Grid.ColumnDefinitions>
             <ProgressBar Grid.Column="0" Minimum="0" Maximum="100" 
                         Value="{Binding Source={x:Static helpers:StaticsVariables.Instance}, Path=Progress}" 
-                        Margin="0,0,10,0"/>
-            <Button Grid.Column="1" Grid.Row="2" Content="Scan" Command="{Binding ScanCommand}" />
+                        Margin="10,0,10,0"/>
+            <Button Grid.Column="1" Grid.Row="2" Content="Scan" Command="{Binding ScanCommand}" Margin="5"/>
         </Grid>
         <Grid Grid.Row="2" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
@@ -56,7 +56,7 @@
             </Grid.RowDefinitions>
             <Button Grid.Row="0" Grid.Column="0" Content="Select All" 
                     Command="{Binding SelectAllCommand}" 
-                    Margin="0,0,0,10"
+                    Margin="10"
                     HorizontalAlignment="Stretch"/>
             <Border Grid.Column="0" Grid.Row="1" 
                     Background="{DynamicResource MantleBrush}" 
@@ -109,13 +109,14 @@
             <Button Grid.Column="0" 
                     Content="Install DLCs" 
                     Command="{Binding InstallDLCCommand}"
-                    Margin="0,0,10,0"
+                    Margin="10,0,10,0"
                     Height="40"
                     FontSize="16"
                     FontWeight="SemiBold"/>
             <Button Grid.Column="1" 
                     Content="Install DLC Unlocker" 
                     Command="{Binding InstallDLCUnlockerCommand}"
+                    Margin="10,0,10,0"
                     Height="40"
                     FontSize="16"
                     FontWeight="SemiBold"/>
