@@ -27,7 +27,7 @@
             <Border Grid.Column="1" Grid.Row="0" 
                     Background="{DynamicResource Surface0Brush}" 
                     CornerRadius="6" 
-                    Padding="10"
+                    Padding="0"
                     Margin="5,5">
                 <TextBlock Text="{Binding Sims4Model.GamePath}" 
                           Foreground="{DynamicResource Subtext0Brush}"
@@ -96,6 +96,8 @@
                     <TextBlock Text="{Binding Logger.Logs}" 
                               TextWrapping="Wrap" 
                               Foreground="{DynamicResource TextBrush}"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Top"
                               FontFamily="Consolas"
                               FontSize="12"/>
                 </ScrollViewer>
