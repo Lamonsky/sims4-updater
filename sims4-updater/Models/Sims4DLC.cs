@@ -62,36 +62,7 @@ namespace sims4_updater.Models
 
 
         }
-        public void DownloadBackup()
-        {
-            _downloadFolder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Sims4DLCs");
 
-            if (!System.IO.Directory.Exists(_downloadFolder))
-            {
-                System.IO.Directory.CreateDirectory(_downloadFolder);
-            }
-
-            string downloadFilePath = System.IO.Path.Combine(_downloadFolder, $"{Code}.zip");
-
-            MegaApiClient megaApiClient = new MegaApiClient();
-
-            megaApiClient.LoginAnonymous();
-
-            Uri fileLink = new Uri(Url);
-
-            string outputFilePath = System.IO.Path.Combine(_downloadFolder, $"{Code}.zip");
-
-            if (System.IO.File.Exists(outputFilePath))
-            {
-                System.IO.File.Delete(outputFilePath);
-            }
-
-            megaApiClient.DownloadFile(fileLink, outputFilePath);
-
-            megaApiClient.Logout();
-
-
-        }
         public void Extract(Logger logger)
         {
             string downloadFilePath = System.IO.Path.Combine(_downloadFolder, $"{Code}.zip");
@@ -111,6 +82,7 @@ namespace sims4_updater.Models
 
             System.IO.Compression.ZipFile.ExtractToDirectory(downloadFilePath, extractFolder);
         } 
+
         public void Install(string gamepath, Logger logger) 
         {
             string extrackedFolder = System.IO.Path.Combine(_downloadFolder, Code);
@@ -120,6 +92,16 @@ namespace sims4_updater.Models
                 {
                     throw new InvalidOperationException("Extracted folder not found.");
                 }
+
+                // Check if there's a single subfolder (common in ZIP archives)
+                string[] subfolders = System.IO.Directory.GetDirectories(extrackedFolder);
+                if (subfolders.Length == 1)
+                {
+                    // Use the subfolder as the source
+                    extrackedFolder = subfolders[0];
+                    logger.AddLog($"Using subfolder: {System.IO.Path.GetFileName(extrackedFolder)}");
+                }
+
                 // Copy extracted files to the game path
                 foreach (string file in System.IO.Directory.GetFiles(extrackedFolder, "*", System.IO.SearchOption.AllDirectories))
                 {
