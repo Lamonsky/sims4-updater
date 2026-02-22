@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using sims4_updater.Helpers;
 using sims4_updater.Models;
+using sims4_updater.Services;
+using System.Windows;
 
 namespace sims4_updater.ViewModel
 {
@@ -11,16 +13,65 @@ namespace sims4_updater.ViewModel
         [ObservableProperty]
         private Sims4Model _sims4Model;
 
-        [ObservableProperty]
         private static Logger _logger = new Logger();
+        public static Logger Logger => _logger;
 
         [ObservableProperty]
         private bool _isDlcListVisible = false;
+
+        [ObservableProperty]
+        private string _currentVersion = string.Empty;
+
+        [ObservableProperty]
+        private bool _isUpdateAvailable = false;
+
+        [ObservableProperty]
+        private string _latestVersion = string.Empty;
+
+        private readonly UpdateChecker _updateChecker;
+        private string? _updateDownloadUrl;
 
 
         public MainViewModel()
         {
             _sims4Model = new Sims4Model(_logger);
+            _updateChecker = new UpdateChecker();
+            CurrentVersion = _updateChecker.GetCurrentVersion();
+
+            _ = CheckForUpdatesAsync();
+        }
+
+        private async Task CheckForUpdatesAsync()
+        {
+            try
+            {
+                var (hasUpdate, latestVersion, downloadUrl) = await _updateChecker.CheckForUpdatesAsync();
+
+                if (hasUpdate && latestVersion != null)
+                {
+                    IsUpdateAvailable = true;
+                    LatestVersion = latestVersion;
+                    _updateDownloadUrl = downloadUrl;
+                    Logger.AddLog($"Dostępna nowa wersja: {latestVersion}");
+                }
+                else
+                {
+                    Logger.AddLog($"Używasz najnowszej wersji: {CurrentVersion}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.AddLog($"Nie można sprawdzić aktualizacji: {ex.Message}");
+            }
+        }
+
+        [RelayCommand]
+        private void DownloadUpdate()
+        {
+            if (!string.IsNullOrEmpty(_updateDownloadUrl))
+            {
+                _updateChecker.OpenReleaseUrl(_updateDownloadUrl);
+            }
         }
 
         [RelayCommand]

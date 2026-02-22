@@ -10,7 +10,8 @@ namespace sims4_updater.Helpers
 
         public void AddLog(string log)
         {
-            Logs += $"{log}{Environment.NewLine}";
+            string CurrentDateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            Logs += $"{CurrentDateTime} - {log}{Environment.NewLine}";
         }
     }
 }

@@ -107,6 +107,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" 
                     Content="Install DLCs" 
@@ -122,6 +123,21 @@
                     Height="40"
                     FontSize="16"
                     FontWeight="SemiBold"/>
+            <StackPanel Grid.Column="2" Orientation="Vertical" Margin="10,0" VerticalAlignment="Center">
+                <TextBlock Text="{Binding CurrentVersion, StringFormat='v{0}'}" 
+                          FontSize="11" 
+                          Foreground="{DynamicResource Subtext0Brush}"
+                          HorizontalAlignment="Right"/>
+                <Button Content="Pobierz aktualizację" 
+                        Command="{Binding DownloadUpdateCommand}"
+                        Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Background="{DynamicResource GreenBrush}"
+                        Foreground="{DynamicResource CrustBrush}"
+                        Padding="15,5"
+                        FontSize="12"
+                        FontWeight="SemiBold"
+                        Margin="0,5,0,0"/>
+            </StackPanel>
         </Grid>
 
 
