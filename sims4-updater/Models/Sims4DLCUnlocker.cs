@@ -1,76 +1,456 @@
 ﻿using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
 using sims4_updater.Helpers;
+using System.Diagnostics;
 using System.IO;
+using System.Security.Principal;
 
 namespace sims4_updater.Models
 {
     public static class Sims4DLCUnlocker
     {
+        private const string UnlockerDllName = "version.dll";
+        private const string ConfigFileName = "config.ini";
+        private const string Sims4ConfigFileName = "g_The Sims 4.ini";
+        private const string AppdataFolder = "anadius\\EA DLC Unlocker v2";
+
         public static async System.Threading.Tasks.Task InstallUnlocker(Logger logger)
         {
-            RemoveFromAutostart(logger);
-            string eadlcunlockerpath = CreateNeccesaryDirectories(logger);
-            CreateOrModifyNeccesaryFiles(logger, eadlcunlockerpath);
-            string eaapppath = GetEAAppPathFromUser(logger);
-            if (eaapppath == null)
-            {
-                logger.AddLog("EA app path is null. Aborting installation.");
-                return;
-            }
-            CheckAndCreateStagedFolders(logger, eaapppath);
-            AddTaskToScheduler(logger, eaapppath);
-        }
-
-        private static void RemoveFromAutostart(Logger logger)
-        {
-            string appName = "EADM";
-
             try
             {
-                // Otwieramy klucz rejestru z prawami do zapisu
-                using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
+                logger.AddLog("=== Starting EA DLC Unlocker installation ===");
+
+                // Check if version.dll exists in application folder
+                string appFolder = AppDomain.CurrentDomain.BaseDirectory;
+                string sourceDll = Path.Combine(appFolder, UnlockerDllName);
+
+                // Detect EA app or Origin
+                var (clientType, clientPath) = DetectEAClient(logger);
+                if (string.IsNullOrEmpty(clientPath))
+                {
+                    logger.AddLog("ERROR: EA app or Origin not found!");
+                    logger.AddLog("Make sure EA app or Origin is installed.");
+                    return;
+                }
+
+                logger.AddLog($"Detected: {clientType}");
+                logger.AddLog($"Path: {clientPath}");
+
+                string tempDllFile = String.Empty;
+
+                if (clientType == "EA app")
+                {
+                    tempDllFile = "ea_app_version.dll";
+                }
+                else if (clientType == "Origin")
+                {
+                    tempDllFile = "origin_version.dll";
+                }
+                else
+                {
+                    logger.AddLog("ERROR: Unsupported client type detected!");
+                    return;
+                }
+
+                if(!File.Exists(Path.Combine(appFolder, tempDllFile)))
+                {
+                    logger.AddLog($"ERROR: File {tempDllFile} not found in application folder!");
+                    logger.AddLog($"Expected location: {Path.Combine(appFolder, tempDllFile)}");
+                    logger.AddLog("Download the required file from https://github.com/Lamonsky/sims4-updater/releases");
+                    return;
+                }
+
+                File.Move(Path.Combine(appFolder, tempDllFile), Path.Combine(appFolder, UnlockerDllName), true);
+
+                if (!File.Exists(sourceDll))
+                {
+                    logger.AddLog($"ERROR: File {UnlockerDllName} not found in application folder!");
+                    logger.AddLog($"Expected location: {sourceDll}");
+                    logger.AddLog("Download version.dll from https://github.com/Lamonsky/sims4-updater/releases");
+                    return;
+                }
+
+                // Check admin rights
+                if (!IsAdministrator())
+                {
+                    logger.AddLog("WARNING: No administrator privileges!");
+                    logger.AddLog("Some operations may fail.");
+                    logger.AddLog("Recommended to run as administrator.");
+                }
+
+                // Stop EA/Origin processes
+                StopEAProcesses(logger, clientType);
+
+                // Create config directories
+                string configPath = CreateNeccesaryDirectories(logger);
+
+                // Create config files
+                CreateOrModifyNeccesaryFiles(logger, configPath);
+
+                // Remove old unlocker versions
+                RemoveOldUnlocker(logger, clientPath);
+
+
+                // Copy version.dll to EA app/Origin
+                string targetDll = Path.Combine(clientPath, UnlockerDllName);
+                CopyDllFile(logger, sourceDll, targetDll);
+
+                // Handle StagedEADesktop folder (for EA app updates)
+                if (clientType == "EA app")
+                {
+                    HandleStagedFolder(logger, clientPath, sourceDll);
+                    ModifyMachineIni(logger);
+                    AddTaskToScheduler(logger, targetDll, clientPath);
+                }
+
+                // Remove from autostart
+                RemoveFromAutostart(logger);
+
+                logger.AddLog("=== Installation completed successfully! ===");
+                logger.AddLog("You can now launch EA app/Origin and the game.");
+            }
+            catch (Exception ex)
+            {
+                logger.AddLog($"CRITICAL ERROR during installation: {ex.Message}");
+                logger.AddLog($"Stack trace: {ex.StackTrace}");
+            }
+        }
+
+        private static bool IsAdministrator()
+        {
+            try
+            {
+                WindowsIdentity identity = WindowsIdentity.GetCurrent();
+                WindowsPrincipal principal = new WindowsPrincipal(identity);
+                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static (string ClientType, string ClientPath) DetectEAClient(Logger logger)
+        {
+            logger.AddLog("Detecting EA app/Origin...");
+
+            // Try EA app first
+            try
+            {
+                using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Electronic Arts\EA Desktop"))
                 {
                     if (key != null)
                     {
-                        // Sprawdzamy czy wpis istnieje i go usuwamy
-                        if (key.GetValue(appName) != null)
+                        string? clientPath = key.GetValue("ClientPath") as string;
+                        if (!string.IsNullOrEmpty(clientPath) && Directory.Exists(Path.GetDirectoryName(clientPath)))
                         {
-                            key.DeleteValue(appName);
-                            logger.AddLog($"Aplikacja {appName} została usunięta z autostartu.");
-                        }
-                        else
-                        {
-                            logger.AddLog("Nie znaleziono takiego wpisu.");
+                            string parentPath = Directory.GetParent(clientPath)?.FullName ?? "";
+                            if (!string.IsNullOrEmpty(parentPath) && Directory.Exists(parentPath))
+                            {
+                                return ("EA app", parentPath);
+                            }
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                logger.AddLog($"Błąd: {ex.Message}");
+                logger.AddLog($"Cannot read EA app registry: {ex.Message}");
+            }
+
+            // Try Origin (64-bit registry)
+            try
+            {
+                using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Origin"))
+                {
+                    if (key != null)
+                    {
+                        string? clientPath = key.GetValue("ClientPath") as string;
+                        if (!string.IsNullOrEmpty(clientPath) && Directory.Exists(Path.GetDirectoryName(clientPath)))
+                        {
+                            string parentPath = Directory.GetParent(clientPath)?.FullName ?? "";
+                            if (!string.IsNullOrEmpty(parentPath) && Directory.Exists(parentPath))
+                            {
+                                return ("Origin", parentPath);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.AddLog($"Cannot read Origin registry (WOW6432Node): {ex.Message}");
+            }
+
+            // Try Origin (32-bit registry)
+            try
+            {
+                using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Origin"))
+                {
+                    if (key != null)
+                    {
+                        string? clientPath = key.GetValue("ClientPath") as string;
+                        if (!string.IsNullOrEmpty(clientPath) && Directory.Exists(Path.GetDirectoryName(clientPath)))
+                        {
+                            string parentPath = Directory.GetParent(clientPath)?.FullName ?? "";
+                            if (!string.IsNullOrEmpty(parentPath) && Directory.Exists(parentPath))
+                            {
+                                return ("Origin", parentPath);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.AddLog($"Cannot read Origin registry: {ex.Message}");
+            }
+
+            return ("", "");
+        }
+
+        private static void StopEAProcesses(Logger logger, string clientType)
+        {
+            logger.AddLog($"Stopping {clientType} processes...");
+
+            string processPattern = clientType == "EA app" ? "EA" : "Origin";
+
+            try
+            {
+                Process[] processes = Process.GetProcesses()
+                    .Where(p => p.ProcessName.StartsWith(processPattern, StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+
+                if (processes.Length == 0)
+                {
+                    logger.AddLog($"No running {processPattern}* processes found");
+                    return;
+                }
+
+                foreach (Process process in processes)
+                {
+                    try
+                    {
+                        logger.AddLog($"Stopping: {process.ProcessName} (PID: {process.Id})");
+                        process.Kill();
+                        process.WaitForExit(5000);
+                        logger.AddLog($"✓ Stopped: {process.ProcessName}");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.AddLog($"Cannot stop {process.ProcessName}: {ex.Message}");
+                    }
+                }
+
+                System.Threading.Thread.Sleep(1000);
+            }
+            catch (Exception ex)
+            {
+                logger.AddLog($"Error stopping processes: {ex.Message}");
+            }
+        }
+
+        private static void RemoveOldUnlocker(Logger logger, string clientPath)
+        {
+            logger.AddLog("Removing old unlocker versions...");
+
+            string[] oldFiles = new[]
+            {
+                "version_o.dll",
+                "winhttp.dll",
+                "winhttp_o.dll"
+            };
+
+            foreach (string fileName in oldFiles)
+            {
+                string filePath = Path.Combine(clientPath, fileName);
+                try
+                {
+                    if (File.Exists(filePath))
+                    {
+                        File.Delete(filePath);
+                        logger.AddLog($"✓ Removed: {fileName}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.AddLog($"Cannot remove {fileName}: {ex.Message}");
+                }
+            }
+
+            // Remove old w_*.ini files
+            try
+            {
+                string[] oldIniFiles = Directory.GetFiles(clientPath, "w_*.ini");
+                foreach (string iniFile in oldIniFiles)
+                {
+                    try
+                    {
+                        File.Delete(iniFile);
+                        logger.AddLog($"✓ Removed: {Path.GetFileName(iniFile)}");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.AddLog($"Cannot remove {Path.GetFileName(iniFile)}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.AddLog($"Error removing old .ini files: {ex.Message}");
+            }
+        }
+
+        private static void CopyDllFile(Logger logger, string source, string destination)
+        {
+            logger.AddLog($"Copying {UnlockerDllName}...");
+            logger.AddLog($"From: {source}");
+            logger.AddLog($"To: {destination}");
+
+            try
+            {
+                File.Copy(source, destination, true);
+                logger.AddLog($"✓ File {UnlockerDllName} copied successfully!");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                logger.AddLog($"ERROR: No write permissions in {Path.GetDirectoryName(destination)}");
+                logger.AddLog("Run application as administrator!");
+            }
+            catch (Exception ex)
+            {
+                logger.AddLog($"ERROR during copying: {ex.Message}");
+            }
+        }
+
+        private static void HandleStagedFolder(Logger logger, string clientPath, string sourceDll)
+        {
+            logger.AddLog("Handling StagedEADesktop folder...");
+
+            try
+            {
+                string? parentFolder = Directory.GetParent(clientPath)?.FullName;
+                if (string.IsNullOrEmpty(parentFolder))
+                {
+                    logger.AddLog("Cannot determine parent folder.");
+                    return;
+                }
+
+                string stagedFolder = Path.Combine(parentFolder, "StagedEADesktop");
+                string targetFolder = Path.Combine(stagedFolder, "EA Desktop");
+
+                // Create folders
+                if (!Directory.Exists(stagedFolder))
+                {
+                    Directory.CreateDirectory(stagedFolder);
+                    logger.AddLog($"✓ Created: {stagedFolder}");
+                }
+
+                if (!Directory.Exists(targetFolder))
+                {
+                    Directory.CreateDirectory(targetFolder);
+                    logger.AddLog($"✓ Created: {targetFolder}");
+                }
+
+                // Copy version.dll to StagedEADesktop
+                string stagedDll = Path.Combine(targetFolder, UnlockerDllName);
+                File.Copy(sourceDll, stagedDll, true);
+                logger.AddLog($"✓ Copied {UnlockerDllName} to StagedEADesktop");
+            }
+            catch (Exception ex)
+            {
+                logger.AddLog($"Error handling StagedEADesktop: {ex.Message}");
+            }
+        }
+
+        private static void ModifyMachineIni(Logger logger)
+        {
+            logger.AddLog("Modifying machine.ini...");
+
+            try
+            {
+                string machineIniPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                    "EA Desktop",
+                    "machine.ini"
+                );
+
+                if (!File.Exists(machineIniPath))
+                {
+                    logger.AddLog($"File machine.ini does not exist: {machineIniPath}");
+                    return;
+                }
+
+                string content = File.ReadAllText(machineIniPath);
+                if (!content.Contains("machine.bgsstandaloneenabled=0"))
+                {
+                    File.AppendAllText(machineIniPath, "\nmachine.bgsstandaloneenabled=0\n");
+                    logger.AddLog("✓ Updated machine.ini");
+                }
+                else
+                {
+                    logger.AddLog("machine.ini already contains required configuration");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.AddLog($"Cannot modify machine.ini: {ex.Message}");
+                logger.AddLog("This is not critical, can continue.");
+            }
+        }
+
+        private static void RemoveFromAutostart(Logger logger)
+        {
+            logger.AddLog("Removing EADM from autostart...");
+            string appName = "EADM";
+
+            try
+            {
+                using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
+                {
+                    if (key != null)
+                    {
+                        if (key.GetValue(appName) != null)
+                        {
+                            key.DeleteValue(appName);
+                            logger.AddLog($"✓ Removed {appName} from autostart");
+                        }
+                        else
+                        {
+                            logger.AddLog("EADM was not in autostart");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.AddLog($"Error removing from autostart: {ex.Message}");
             }
         }
 
         private static string CreateNeccesaryDirectories(Logger logger)
         {
+            logger.AddLog("Creating configuration folders...");
+
             string roamingPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string DirectoryPath = Path.Combine(roamingPath, "anadius");
-            
-            logger.AddLog($"Creating Directory: {DirectoryPath}");
+            string eadlcunlockerpath = Path.Combine(roamingPath, AppdataFolder);
 
-            if (!Directory.Exists(DirectoryPath))
+            try
             {
-                Directory.CreateDirectory(DirectoryPath);
+                if (!Directory.Exists(eadlcunlockerpath))
+                {
+                    Directory.CreateDirectory(eadlcunlockerpath);
+                    logger.AddLog($"✓ Created: {eadlcunlockerpath}");
+                }
+                else
+                {
+                    logger.AddLog($"Folder already exists: {eadlcunlockerpath}");
+                }
             }
-
-            string eadlcunlockerpath = Path.Combine(DirectoryPath, "EA DLC Unlocker v2");
-
-            logger.AddLog($"Creating Directory: {DirectoryPath}");
-
-            if (!Directory.Exists(eadlcunlockerpath))
+            catch (Exception ex)
             {
-                Directory.CreateDirectory(eadlcunlockerpath);
+                logger.AddLog($"ERROR creating folder: {ex.Message}");
+                throw;
             }
 
             return eadlcunlockerpath;
@@ -78,12 +458,23 @@ namespace sims4_updater.Models
         
         private static void CreateOrModifyNeccesaryFiles(Logger logger, string eadlcunlockerpath)
         {
-            string configFilePath = Path.Combine(eadlcunlockerpath, "config.ini");
-            string sims4ConfigFilePath = Path.Combine(eadlcunlockerpath, "g_The Sims 4.ini");
-            logger.AddLog($"Creating or modifying file: {configFilePath}");
-            File.WriteAllText(configFilePath, ConfigFile);
-            logger.AddLog($"Creating or modifying file: {sims4ConfigFilePath}");
-            File.WriteAllText(sims4ConfigFilePath, Sims4ConfigFile);
+            logger.AddLog("Creating configuration files...");
+
+            try
+            {
+                string configFilePath = Path.Combine(eadlcunlockerpath, ConfigFileName);
+                File.WriteAllText(configFilePath, ConfigFile);
+                logger.AddLog($"✓ Created: {ConfigFileName}");
+
+                string sims4ConfigFilePath = Path.Combine(eadlcunlockerpath, Sims4ConfigFileName);
+                File.WriteAllText(sims4ConfigFilePath, Sims4ConfigFile);
+                logger.AddLog($"✓ Created: {Sims4ConfigFileName}");
+            }
+            catch (Exception ex)
+            {
+                logger.AddLog($"ERROR creating configuration files: {ex.Message}");
+                throw;
+            }
         }
 
         private static string GetEAAppPathFromUser(Logger logger)
@@ -137,35 +528,39 @@ namespace sims4_updater.Models
             }
         }
 
-        private static void AddTaskToScheduler(Logger logger, string eaapppath)
+        private static void AddTaskToScheduler(Logger logger, string sourceDll, string clientPath)
         {
+            logger.AddLog("Creating scheduled task (Task Scheduler)...");
+
             try
             {
                 string taskName = "copy_dlc_unlocker";
-                string sourceDll = Path.Combine(eaapppath, "version.dll");
-
-                string? parentFolder = Directory.GetParent(eaapppath)?.FullName;
+                string? parentFolder = Directory.GetParent(clientPath)?.FullName;
                 if (string.IsNullOrEmpty(parentFolder))
                 {
-                    logger.AddLog("Error: Cannot determine parent folder of EA app path.");
+                    logger.AddLog("Cannot determine parent folder.");
                     return;
                 }
 
                 string targetFolder = Path.Combine(parentFolder, "StagedEADesktop", "EA Desktop");
 
-                logger.AddLog($"Creating scheduled task: {taskName}");
-                logger.AddLog($"Source: {sourceDll}");
-                logger.AddLog($"Target: {targetFolder}");
-
                 using (TaskService ts = new TaskService())
                 {
+                    // Remove old task if exists
+                    try
+                    {
+                        ts.RootFolder.DeleteTask(taskName, false);
+                    }
+                    catch { }
+
                     TaskDefinition td = ts.NewTask();
-                    td.RegistrationInfo.Description = "Copy EA DLC Unlocker version.dll to StagedEADesktop";
+                    td.RegistrationInfo.Description = "Automatycznie kopiuje EA DLC Unlocker do StagedEADesktop po aktualizacji EA app";
                     td.RegistrationInfo.Author = "Sims 4 Updater";
 
                     td.Principal.RunLevel = TaskRunLevel.Highest;
                     td.Principal.LogonType = TaskLogonType.InteractiveToken;
 
+                    // Dummy trigger (task will be run manually)
                     TimeTrigger trigger = new TimeTrigger
                     {
                         StartBoundary = new DateTime(2000, 1, 1, 0, 0, 0),
@@ -173,6 +568,7 @@ namespace sims4_updater.Models
                     };
                     td.Triggers.Add(trigger);
 
+                    // Action to copy DLL
                     ExecAction action = new ExecAction(
                         "xcopy.exe",
                         $"/Y \"{sourceDll}\" \"{targetFolder}\\*\"",
@@ -194,20 +590,21 @@ namespace sims4_updater.Models
                         TaskLogonType.InteractiveToken
                     );
 
-                    logger.AddLog($"Task '{taskName}' created successfully using Task Scheduler API.");
+                    logger.AddLog($"✓ Task '{taskName}' created successfully");
 
-                    logger.AddLog($"Running task '{taskName}' immediately...");
+                    // Run task immediately
                     registeredTask.Run();
-                    logger.AddLog($"Task '{taskName}' has been started.");
+                    logger.AddLog("✓ Task started immediately");
                 }
             }
             catch (UnauthorizedAccessException)
             {
-                logger.AddLog("Error: Insufficient permissions to create scheduled task. Please run the application as administrator.");
+                logger.AddLog("ERROR: No permissions to create tasks.");
+                logger.AddLog("Run application as administrator!");
             }
             catch (Exception ex)
             {
-                logger.AddLog($"Error creating scheduled task: {ex.Message}");
+                logger.AddLog($"Error creating task: {ex.Message}");
             }
         }
 
