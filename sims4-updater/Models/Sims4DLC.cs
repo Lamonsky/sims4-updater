@@ -22,7 +22,7 @@ namespace sims4_updater.Models
         private bool _toInstall = false;
         private string _downloadFolder = string.Empty;
 
-        public void Download(Logger logger, INode targetNode)
+        public async Task Download(Logger logger, INode targetNode)
         {
             _downloadFolder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Sims4DLCs");
 
@@ -50,7 +50,11 @@ namespace sims4_updater.Models
                 return;
             }
 
-            megaApiClient.DownloadFile(targetNode, outputFilePath);
+            IProgress<double> progress = new Progress<double>(p =>
+            {
+                StaticsVariables.Instance.Progress = p;
+            });
+            await megaApiClient.DownloadFileAsync(targetNode, outputFilePath, progress);
 
             //megaApiClient.DownloadFile(fileLink, outputFilePath);
 

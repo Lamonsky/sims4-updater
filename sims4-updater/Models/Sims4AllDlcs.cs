@@ -127,8 +127,6 @@ namespace sims4_updater.Models
 
         public async Task DownloadAndInstallSelectedDlcsAsync(Logger logger, string gamepath)
         {
-            int maxProgress = Sims4DLCs.Count(dlc => dlc.ToInstall && !dlc.Installed) * 4;
-            int currentProgress = 0;
 
             MegaApiClient client = new MegaApiClient();
             
@@ -162,27 +160,16 @@ namespace sims4_updater.Models
 
                     await Task.Run(() => dlc.Download(logger, node));
 
-                    currentProgress++;
-                    StaticsVariables.Instance.Progress = (currentProgress * 100) / maxProgress;
 
                     logger.AddLog($"Extracting DLC: {dlc.Code} - {dlc.Name}");
                     await Task.Run(() => dlc.Extract(logger));
 
-                    currentProgress++;
-                    StaticsVariables.Instance.Progress = (currentProgress * 100) / maxProgress;
-
                     logger.AddLog($"Installing DLC: {dlc.Code} - {dlc.Name}");
                     await Task.Run(() => dlc.Install(gamepath, logger));
-
-                    currentProgress++;
-                    StaticsVariables.Instance.Progress = (currentProgress * 100) / maxProgress;
 
                     logger.AddLog($"Installed DLC: {dlc.Code} - {dlc.Name}");
                     logger.AddLog($"Clearing TEMP files");
                     await Task.Run(() => dlc.Remove(logger));
-
-                    currentProgress++;
-                    StaticsVariables.Instance.Progress = (currentProgress * 100) / maxProgress;
 
                     logger.AddLog("---------------------------------------------");
                 }

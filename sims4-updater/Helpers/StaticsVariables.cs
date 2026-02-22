@@ -11,7 +11,7 @@ namespace sims4_updater.Helpers
         public static StaticsVariables Instance => _instance ??= new StaticsVariables();
 
         [ObservableProperty]
-        private int progress = 0;
+        private double progress = 0;
 
         private StaticsVariables() { }
     }

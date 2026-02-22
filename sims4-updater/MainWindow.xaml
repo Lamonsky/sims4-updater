@@ -6,71 +6,121 @@
         xmlns:local="clr-namespace:sims4_updater"
         xmlns:helpers="clr-namespace:sims4_updater.Helpers"
         mc:Ignorable="d"
-        Title="MainWindow" Height="900" Width="1600">
+        Title="Sims4 DLC Downloader and Unlocker" Height="900" Width="1600">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
-    <Grid>
+    <Grid Margin="15">
         <Grid.RowDefinitions>
-            <RowDefinition Height="45" />
-            <RowDefinition Height="45" />
+            <RowDefinition Height="50" />
+            <RowDefinition Height="50" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="45" />
+            <RowDefinition Height="60" />
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0">
+        <Grid Grid.Row="0" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="150" />
+                <ColumnDefinition Width="180" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="150" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Grid.Row="0" Text="Select folder with Sims 4:" />
-            <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding Sims4Model.GamePath}" />
-            <Button Grid.Column="2" Grid.Row="0" Content="Browse" Command="{Binding BrowseCommand}" />
+            <TextBlock Grid.Column="0" Grid.Row="0" Text="Select folder with Sims 4:" FontWeight="SemiBold"/>
+            <Border Grid.Column="1" Grid.Row="0" 
+                    Background="{DynamicResource Surface0Brush}" 
+                    CornerRadius="6" 
+                    Padding="10"
+                    Margin="5,0">
+                <TextBlock Text="{Binding Sims4Model.GamePath}" 
+                          Foreground="{DynamicResource Subtext0Brush}"
+                          VerticalAlignment="Center"/>
+            </Border>
+            <Button Grid.Column="2" Grid.Row="0" Content="Browse" Command="{Binding BrowseCommand}" Margin="5,0,0,0"/>
         </Grid>
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="150" />
             </Grid.ColumnDefinitions>
-            <ProgressBar Grid.Column="0" Minimum="0" Maximum="100" Value="{Binding Source={x:Static helpers:StaticsVariables.Instance}, Path=Progress}" />
+            <ProgressBar Grid.Column="0" Minimum="0" Maximum="100" 
+                        Value="{Binding Source={x:Static helpers:StaticsVariables.Instance}, Path=Progress}" 
+                        Margin="0,0,10,0"/>
             <Button Grid.Column="1" Grid.Row="2" Content="Scan" Command="{Binding ScanCommand}" />
         </Grid>
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="2" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300" />
+                <ColumnDefinition Width="350" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <Button Grid.Row="0" Grid.Column="0" Content="Select All" Command="{Binding SelectAllCommand}" />
-            <ScrollViewer Grid.Column="0" Grid.Row="1" VerticalScrollBarVisibility="Auto" >
-                <ListBox ItemsSource="{Binding Sims4Model.AllDlcs.Sims4DLCs}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <CheckBox IsChecked="{Binding ToInstall}" Margin="5"/>
-                                <TextBlock Text="{Binding Code}" Margin="5" Width="50" />
-                                <TextBlock Text="{Binding Name}" Margin="5" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </ScrollViewer>
-            <ScrollViewer Grid.Column="1" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto">
-                <TextBlock Text="{Binding Logger.Logs}" TextWrapping="Wrap" />
-            </ScrollViewer>
+            <Button Grid.Row="0" Grid.Column="0" Content="Select All" 
+                    Command="{Binding SelectAllCommand}" 
+                    Margin="0,0,0,10"
+                    HorizontalAlignment="Stretch"/>
+            <Border Grid.Column="0" Grid.Row="1" 
+                    Background="{DynamicResource MantleBrush}" 
+                    CornerRadius="8" 
+                    BorderBrush="{DynamicResource Surface2Brush}" 
+                    BorderThickness="1"
+                    Margin="0,0,10,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ListBox ItemsSource="{Binding Sims4Model.AllDlcs.Sims4DLCs}" 
+                            Background="Transparent"
+                            BorderThickness="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox IsChecked="{Binding ToInstall}" Margin="5"/>
+                                    <TextBlock Text="{Binding Code}" 
+                                              Margin="5" 
+                                              Width="60" 
+                                              Foreground="{DynamicResource SapphireBrush}"
+                                              FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding Name}" 
+                                              Margin="5" 
+                                              Foreground="{DynamicResource TextBrush}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </ScrollViewer>
+            </Border>
+            <Border Grid.Column="1" Grid.RowSpan="2" 
+                    Background="{DynamicResource MantleBrush}" 
+                    CornerRadius="8" 
+                    BorderBrush="{DynamicResource Surface2Brush}" 
+                    BorderThickness="1"
+                    Padding="10">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <TextBlock Text="{Binding Logger.Logs}" 
+                              TextWrapping="Wrap" 
+                              Foreground="{DynamicResource TextBrush}"
+                              FontFamily="Consolas"
+                              FontSize="12"/>
+                </ScrollViewer>
+            </Border>
         </Grid>
         <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Content="Install DLCs" Command="{Binding InstallDLCCommand}"/>
-            <Button Grid.Column="1" Content="Install DLC Unlocker" Command="{Binding InstallDLCUnlockerCommand}"/>
+            <Button Grid.Column="0" 
+                    Content="Install DLCs" 
+                    Command="{Binding InstallDLCCommand}"
+                    Margin="0,0,10,0"
+                    Height="40"
+                    FontSize="16"
+                    FontWeight="SemiBold"/>
+            <Button Grid.Column="1" 
+                    Content="Install DLC Unlocker" 
+                    Command="{Binding InstallDLCUnlockerCommand}"
+                    Height="40"
+                    FontSize="16"
+                    FontWeight="SemiBold"/>
         </Grid>
-        
-        
+
+
     </Grid>
 </Window>
