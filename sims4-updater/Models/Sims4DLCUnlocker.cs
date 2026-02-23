@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
 using sims4_updater.Helpers;
+using sims4_updater.Services;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Principal;
@@ -36,15 +37,15 @@ namespace sims4_updater.Models
                 logger.AddLog($"Detected: {clientType}");
                 logger.AddLog($"Path: {clientPath}");
 
-                string tempDllFile = String.Empty;
+                string dllUrlToDownload = String.Empty;
 
                 if (clientType == "EA app")
                 {
-                    tempDllFile = "ea_app_version.dll";
+                    dllUrlToDownload = "https://github.com/Lamonsky/sims4-updater/releases/download/Beta/ea_app_version.dll";
                 }
                 else if (clientType == "Origin")
                 {
-                    tempDllFile = "origin_version.dll";
+                    dllUrlToDownload = "https://github.com/Lamonsky/sims4-updater/releases/download/Beta/origin_version.dll";
                 }
                 else
                 {
@@ -52,22 +53,14 @@ namespace sims4_updater.Models
                     return;
                 }
 
-                if(!File.Exists(Path.Combine(appFolder, tempDllFile)))
-                {
-                    logger.AddLog($"ERROR: File {tempDllFile} not found in application folder!");
-                    logger.AddLog($"Expected location: {Path.Combine(appFolder, tempDllFile)}");
-                    logger.AddLog("Download the required file from https://github.com/Lamonsky/sims4-updater/releases");
-                    return;
-                }
 
-                File.Move(Path.Combine(appFolder, tempDllFile), Path.Combine(appFolder, UnlockerDllName), true);
 
                 if (!File.Exists(sourceDll))
                 {
-                    logger.AddLog($"ERROR: File {UnlockerDllName} not found in application folder!");
-                    logger.AddLog($"Expected location: {sourceDll}");
-                    logger.AddLog("Download version.dll from https://github.com/Lamonsky/sims4-updater/releases");
-                    return;
+                    logger.AddLog($"File {UnlockerDllName} not found in application folder. Attempting to download");
+                   
+                    await Downloader.DownloadFileAsync(dllUrlToDownload, sourceDll);
+
                 }
 
                 // Check admin rights

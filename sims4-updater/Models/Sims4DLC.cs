@@ -50,17 +50,46 @@ namespace sims4_updater.Models
                 return;
             }
 
+            long totalSize = targetNode.Size;
+            long downloadedSize = 0;
+            DateTime lastUpdate = DateTime.Now;
+
             IProgress<double> progress = new Progress<double>(p =>
             {
                 StaticsVariables.Instance.Progress = p;
+
+                downloadedSize = (long)(totalSize * p / 100.0);
+
+                if ((DateTime.Now - lastUpdate).TotalSeconds >= 1)
+                {
+                    string downloaded = FormatFileSize(downloadedSize);
+                    string total = FormatFileSize(totalSize);
+                    StaticsVariables.Instance.DownloadSizeInfo = $"{downloaded} / {total}";
+                    logger.AddLog($"Downloaded: {downloaded} / {total}");
+                    lastUpdate = DateTime.Now;
+                }
             });
+
             await megaApiClient.DownloadFileAsync(targetNode, outputFilePath, progress);
 
-            //megaApiClient.DownloadFile(fileLink, outputFilePath);
+            string finalDownloaded = FormatFileSize(totalSize);
+            StaticsVariables.Instance.DownloadSizeInfo = $"{finalDownloaded} / {finalDownloaded}";
+            logger.AddLog($"Download complete: {finalDownloaded}");
 
             megaApiClient.Logout();
+        }
 
-
+        private static string FormatFileSize(long bytes)
+        {
+            string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+            double len = bytes;
+            int order = 0;
+            while (len >= 1024 && order < sizes.Length - 1)
+            {
+                order++;
+                len = len / 1024;
+            }
+            return $"{len:0.##} {sizes[order]}";
         }
 
         public void Extract(Logger logger)

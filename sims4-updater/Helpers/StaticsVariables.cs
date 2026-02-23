@@ -13,6 +13,9 @@ namespace sims4_updater.Helpers
         [ObservableProperty]
         private double progress = 0;
 
+        [ObservableProperty]
+        private string downloadSizeInfo = string.Empty;
+
         private StaticsVariables() { }
     }
 }

@@ -91,6 +91,11 @@ namespace sims4_updater.ViewModel
         [RelayCommand]
         private void Scan()
         {
+            if(string.IsNullOrEmpty(Sims4Model.GamePath))
+            {
+                Logger.AddLog("ERROR: Please select the Sims 4 game folder first.");
+                return;
+            }
             Sims4Model.ScanDirectoryForDLCS(Sims4Model.GamePath);
             IsDlcListVisible = true;            
         }
