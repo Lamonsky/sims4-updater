@@ -52,16 +52,16 @@ namespace sims4_updater.ViewModel
                     IsUpdateAvailable = true;
                     LatestVersion = latestVersion;
                     _updateDownloadUrl = downloadUrl;
-                    Logger.AddLog($"Dostępna nowa wersja: {latestVersion}");
+                    Logger.AddLog($"New Version available: {latestVersion}");
                 }
                 else
                 {
-                    Logger.AddLog($"Używasz najnowszej wersji: {CurrentVersion}");
+                    Logger.AddLog($"You are using the latest version: {CurrentVersion}");
                 }
             }
             catch (Exception ex)
             {
-                Logger.AddLog($"Nie można sprawdzić aktualizacji: {ex.Message}");
+                Logger.AddLog($"Unable to check for updates: {ex.Message}");
             }
         }
 
