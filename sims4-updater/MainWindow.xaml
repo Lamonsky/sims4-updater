@@ -130,7 +130,7 @@
                           FontSize="11" 
                           Foreground="{DynamicResource Subtext0Brush}"
                           HorizontalAlignment="Right"/>
-                <Button Content="Pobierz aktualizację" 
+                <Button Content="Update App" 
                         Command="{Binding DownloadUpdateCommand}"
                         Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}"
                         Background="{DynamicResource GreenBrush}"
