@@ -64,7 +64,7 @@
                     BorderBrush="{DynamicResource Surface2Brush}" 
                     BorderThickness="1"
                     Margin="0,0,10,0">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" CanContentScroll="True">
                     <ListBox ItemsSource="{Binding Sims4Model.AllDlcs.Sims4DLCs}" 
                             Background="Transparent"
                             BorderThickness="0">
@@ -92,7 +92,9 @@
                     BorderBrush="{DynamicResource Surface2Brush}" 
                     BorderThickness="1"
                     Padding="10">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                             CanContentScroll="True"
+                             helpers:ScrollToEndBehavior.AutoScrollToEnd="True">
                     <TextBlock Text="{Binding Logger.Logs}" 
                               TextWrapping="Wrap" 
                               Foreground="{DynamicResource TextBrush}"
