@@ -122,6 +122,8 @@ namespace sims4_updater.Models
             Sims4DLCs.Add(new Sims4DLC { Code = "SP76", Name = "The Sims 4 Silver Screen Style Kit", Url = "https://example.com/artist-studio", Installed = false });
             Sims4DLCs.Add(new Sims4DLC { Code = "SP77", Name = "The Sims 4 Tea Time Solarium Kit", Url = "https://example.com/storybook-nursery", Installed = false });
             Sims4DLCs.Add(new Sims4DLC { Code = "SP81", Name = "The Sims 4 Prairie Dreams Set", Url = "https://example.com/storybook-nursery", Installed = false });
+            Sims4DLCs.Add(new Sims4DLC { Code = "SP75", Name = "The Sims 4 Wonderland Playroom Kit", Url = "https://example.com/storybook-nursery", Installed = false });
+            Sims4DLCs.Add(new Sims4DLC { Code = "SP82", Name = "The Sims 4 Yard Charm (Creator) Kit", Url = "https://example.com/storybook-nursery", Installed = false });
         }
 
 

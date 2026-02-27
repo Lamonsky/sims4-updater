@@ -642,7 +642,7 @@ namespace sims4_updater.Models
             ; if you want to disable a DLC - add ; before IID
 
             [config]
-            CNT=145
+            CNT=147
 
             NAM1=Life of the Party Digital Content
             IID1=SIMS4.OFF.SOLP.0x0000000000008E14
@@ -1513,6 +1513,18 @@ namespace sims4_updater.Models
             ETG145=EP21_PrePurchase_0x000000000007B9F1:506353
             GRP145=THESIMS4PC
             TYP145=DEFAULT
+            
+            NAM146=The Sims™ 4 Wonderland Playroom Kit
+            IID146=SIMS4.OFF.SOLP.0x000000000007F616
+            ETG146=SP75_WonderlandPlayroom_0x000000000007F616:521750
+            GRP146=THESIMS4PC
+            TYP146=DEFAULT
+
+            NAM147=The Sims™ 4 Yard Charm (Creator) Kit
+            IID147=SIMS4.OFF.SOLP.0x00000000000810FE
+            ETG147=SP82_YardCharm_0x00000000000810FE:528638
+            GRP147=THESIMS4PC
+            TYP147=DEFAULT
             
             """;
 
